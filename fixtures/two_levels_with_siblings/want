@@ -1,0 +1,6 @@
+src
+├── dir1
+│   ├── one.file
+│   └── two.file
+└── dir2
+    └── three.file
