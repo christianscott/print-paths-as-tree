@@ -7,20 +7,75 @@ import (
 	"strings"
 )
 
+func main() {
+	scanner := bufio.NewScanner(os.Stdin)
+	fmt.Println(printScannerAsTree(scanner))
+}
+
+func printScannerAsTree(s *bufio.Scanner) string {
+	root := &node{
+		name:     "root",
+		parent:   nil,
+		children: []*node{},
+	}
+	for s.Scan() {
+		path := s.Text()
+		root.insert(path)
+	}
+
+	if err := s.Err(); err != nil {
+		panic(err)
+	}
+
+	return root.PrintAsTree()
+}
+
 type node struct {
 	parent   *node
 	children []*node
 	name     string
 }
 
-func newNode(name string, parent *node, children []*node) *node {
-	return &node{
-		parent,
-		children,
-		name,
+const (
+	verticalPipe             = '│'
+	horizontalPipe           = '─'
+	cornerPipe               = '└'
+	verticalPipeWithOffshoot = '├'
+)
+
+// PrintAsTree prints the node & all it's children as a `tree`-style tree
+func (n *node) PrintAsTree() string {
+	var sb strings.Builder
+	sb.WriteString(".\n")
+	n.printAsTreeHelper(&sb)
+	return sb.String()
+}
+
+func (n *node) printAsTreeHelper(sb *strings.Builder) {
+	for _, child := range n.children {
+		for _, parent := range child.findParents() {
+			var connChar rune
+			if parent.isLastChild() {
+				connChar = ' '
+			} else {
+				connChar = verticalPipe
+			}
+			sb.WriteString(fmt.Sprintf("%c%s", connChar, spaces(len(parent.name)-1)))
+		}
+
+		var connChar rune
+		if child.isLastChild() {
+			connChar = cornerPipe
+		} else {
+			connChar = verticalPipeWithOffshoot
+		}
+
+		sb.WriteString(fmt.Sprintf("%c%c %s\n", connChar, horizontalPipe, child.name))
+		child.printAsTreeHelper(sb)
 	}
 }
 
+// insert inserts all nodes represented by the supplied path. A node is added for each segment.
 func (n *node) insert(path string) {
 	current := n
 	segments := strings.Split(path, "/")
@@ -41,15 +96,9 @@ func (n *node) insert(path string) {
 	}
 }
 
-func (n *node) findChildWithName(name string) *node {
-	for _, child := range n.children {
-		if child.name == name {
-			return child
-		}
-	}
-	return nil
-}
-
+// findParents returns an array containing all the nodes parents. The parent nodes are
+// returned in order of highest to lowest, and the root node is skipped. That is, the
+// first node will be the parent node closest to the root.
 func (n *node) findParents() []*node {
 	parents := []*node{}
 	current := n
@@ -60,10 +109,41 @@ func (n *node) findParents() []*node {
 	return parents
 }
 
+// findChildWithName finds a child with a name matching the supplied name inside the node's
+// array of child nodes
+func (n *node) findChildWithName(name string) *node {
+	for _, child := range n.children {
+		if child.name == name {
+			return child
+		}
+	}
+	return nil
+}
+
+// isRoot returns true if the node has no parent
 func (n *node) isRoot() bool {
 	return n.parent == nil
 }
 
+// isLastChild returns true if n is the final node in the parent node's array of children
+func (n *node) isLastChild() bool {
+	if n.parent == nil {
+		return false
+	}
+	return n.position() == len(n.parent.children)-1
+}
+
+// position returns the index of the current node in the parent node's array of children
+func (n *node) position() int {
+	i := n.parent.indexOf(n)
+	if i == -1 {
+		panic("n is not a child of its parent")
+	}
+	return i
+}
+
+// indexOf returns the index of `target` in the `children` array of `n`, if itexists. Otherwise,
+// it returns -1
 func (n *node) indexOf(target *node) int {
 	for i, child := range n.children {
 		if child == target {
@@ -73,59 +153,7 @@ func (n *node) indexOf(target *node) int {
 	return -1
 }
 
-func (n *node) position() int {
-	i := n.parent.indexOf(n)
-	if i == -1 {
-		panic("n is not a child of its parent")
-	}
-	return i
-}
-
-func (n *node) isLastChild() bool {
-	if n.parent == nil {
-		return false
-	}
-	return n.position() == len(n.parent.children)-1
-}
-
-func (n *node) printAsTree() string {
-	var sb strings.Builder
-	sb.WriteString(".\n")
-	printAsTreeHelper(&sb, n)
-	return sb.String()
-}
-
-const (
-	verticalPipe             = '│'
-	horizontalPipe           = '─'
-	cornerPipe               = '└'
-	verticalPipeWithOffshoot = '├'
-)
-
-func printAsTreeHelper(sb *strings.Builder, n *node) {
-	for _, child := range n.children {
-		for _, parent := range child.findParents() {
-			var connChar rune
-			if parent.isLastChild() {
-				connChar = ' '
-			} else {
-				connChar = verticalPipe
-			}
-			sb.WriteString(fmt.Sprintf("%c%s", connChar, spaces(len(parent.name)-1)))
-		}
-
-		var connChar rune
-		if child.isLastChild() {
-			connChar = cornerPipe
-		} else {
-			connChar = verticalPipeWithOffshoot
-		}
-
-		sb.WriteString(fmt.Sprintf("%c%c %s\n", connChar, horizontalPipe, child.name))
-		printAsTreeHelper(sb, child)
-	}
-}
-
+// spaces returns a string of length n containing only space characters
 func spaces(n int) string {
 	s := make([]byte, n)
 	for i := 0; i < n; i++ {
@@ -134,25 +162,10 @@ func spaces(n int) string {
 	return string(s)
 }
 
-func printScannerAsTree(s *bufio.Scanner) string {
-	root := &node{
-		name:     "root",
-		parent:   nil,
-		children: []*node{},
+func newNode(name string, parent *node, children []*node) *node {
+	return &node{
+		parent,
+		children,
+		name,
 	}
-	for s.Scan() {
-		path := s.Text()
-		root.insert(path)
-	}
-
-	if err := s.Err(); err != nil {
-		panic(err)
-	}
-
-	return root.printAsTree()
-}
-
-func main() {
-	scanner := bufio.NewScanner(os.Stdin)
-	fmt.Println(printScannerAsTree(scanner))
 }
