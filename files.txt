@@ -1,4 +1,0 @@
-src/foo/bar.ts
-src/foo/bar/baz.ts
-src/index.ts
-package.json
