@@ -13,18 +13,26 @@ func main() {
 }
 
 func printScannerAsTree(s *bufio.Scanner) string {
-	root := &node{
+	dummyRoot := &node{
 		name:     ".",
 		parent:   nil,
 		children: []*node{},
 	}
 	for s.Scan() {
 		path := s.Text()
-		root.insert(path)
+		dummyRoot.insert(path)
 	}
 
 	if err := s.Err(); err != nil {
 		panic(err)
+	}
+
+	root := dummyRoot
+	// if the dummy root only has a single child, we can use that
+	// as the root for printing instead
+	if len(root.children) == 1 {
+		root = root.children[0]
+		root.parent = nil
 	}
 
 	return root.PrintAsTree()
@@ -45,15 +53,9 @@ const (
 
 // PrintAsTree prints the node & all it's children as a `tree`-style tree
 func (n *node) PrintAsTree() string {
-	root := n
-	for len(root.children) == 1 {
-		root = root.children[0]
-	}
-	root.parent = nil
-
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("%s\n", root.name))
-	root.printAsTreeHelper(&sb)
+	sb.WriteString(fmt.Sprintf("%s\n", n.name))
+	n.printAsTreeHelper(&sb)
 	return sb.String()
 }
 
