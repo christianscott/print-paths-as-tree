@@ -164,7 +164,13 @@ const (
 func printAsTreeHelper(sb *strings.Builder, n *node) string {
 	for _, child := range n.children {
 		for _, parent := range child.findParents() {
-			sb.WriteString(fmt.Sprintf("%s", spaces(len(parent.name))))
+			var pipe rune
+			if parent.isLastChild() {
+				pipe = ' '
+			} else {
+				pipe = verticalPipe
+			}
+			sb.WriteString(fmt.Sprintf("%c%s", pipe, spaces(len(parent.name)-1)))
 		}
 
 		var pipe rune
