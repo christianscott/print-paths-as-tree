@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"strings"
 	"testing"
 )
 
@@ -81,14 +82,15 @@ func TestFixtures(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		want, err := ioutil.ReadFile(path.Join("fixtures", f.Name(), "want"))
+		wantBytes, err := ioutil.ReadFile(path.Join("fixtures", f.Name(), "want"))
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		got := printScannerAsTree(bufio.NewScanner(inFile))
-		if string(want) != got {
-			t.Error("AHHH")
+		want := strings.TrimSpace(string(wantBytes))
+		got := strings.TrimSpace(printScannerAsTree(bufio.NewScanner(inFile)))
+		if want != got {
+			t.Errorf("input for fixture %s did not match output.\nwanted:\n%s\ngot:\n%s", f.Name(), want, got)
 		}
 	}
 }

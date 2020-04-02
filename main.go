@@ -14,7 +14,7 @@ func main() {
 
 func printScannerAsTree(s *bufio.Scanner) string {
 	root := &node{
-		name:     "root",
+		name:     ".",
 		parent:   nil,
 		children: []*node{},
 	}
@@ -45,22 +45,32 @@ const (
 
 // PrintAsTree prints the node & all it's children as a `tree`-style tree
 func (n *node) PrintAsTree() string {
+	root := n
+	for len(root.children) == 1 {
+		root = root.children[0]
+	}
+	root.parent = nil
+
 	var sb strings.Builder
-	sb.WriteString(".\n")
-	n.printAsTreeHelper(&sb)
+	sb.WriteString(fmt.Sprintf("%s\n", root.name))
+	root.printAsTreeHelper(&sb)
 	return sb.String()
 }
 
 func (n *node) printAsTreeHelper(sb *strings.Builder) {
 	for _, child := range n.children {
 		for _, parent := range child.findParents() {
+			if parent.isRoot() {
+				continue
+			}
+
 			var connChar rune
 			if parent.isLastChild() {
 				connChar = ' '
 			} else {
 				connChar = verticalPipe
 			}
-			sb.WriteString(fmt.Sprintf("%c%s", connChar, spaces(len(parent.name)-1)))
+			sb.WriteString(fmt.Sprintf("%c%s", connChar, spaces(3)))
 		}
 
 		var connChar rune
@@ -70,7 +80,7 @@ func (n *node) printAsTreeHelper(sb *strings.Builder) {
 			connChar = verticalPipeWithOffshoot
 		}
 
-		sb.WriteString(fmt.Sprintf("%c%c %s\n", connChar, horizontalPipe, child.name))
+		sb.WriteString(fmt.Sprintf("%c%c%c %s\n", connChar, horizontalPipe, horizontalPipe, child.name))
 		child.printAsTreeHelper(sb)
 	}
 }
@@ -102,7 +112,7 @@ func (n *node) insert(path string) {
 func (n *node) findParents() []*node {
 	parents := []*node{}
 	current := n
-	for current.parent != nil && !current.parent.isRoot() {
+	for current.parent != nil {
 		parents = append([]*node{current.parent}, parents...)
 		current = current.parent
 	}
