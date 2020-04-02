@@ -1,6 +1,10 @@
 package main
 
 import (
+	"bufio"
+	"io/ioutil"
+	"os"
+	"path"
 	"testing"
 )
 
@@ -59,4 +63,32 @@ func TestInsertAddsChildrenWithCommonParent(t *testing.T) {
 	assertNotNil(t, srcNode)
 	assertNotNil(t, srcNode.findChildWithName("foo"))
 	assertNotNil(t, srcNode.findChildWithName("bar"))
+}
+
+func TestFixtures(t *testing.T) {
+	files, err := ioutil.ReadDir("fixtures")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, f := range files {
+		if !f.IsDir() {
+			t.Error("expected everything in fixtures/ to be a directory")
+		}
+
+		inFile, err := os.Open(path.Join("fixtures", f.Name(), "input"))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		want, err := ioutil.ReadFile(path.Join("fixtures", f.Name(), "want"))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		got := printScannerAsTree(bufio.NewScanner(inFile))
+		if string(want) != got {
+			t.Error("AHHH")
+		}
+	}
 }
