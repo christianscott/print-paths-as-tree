@@ -1,6 +1,8 @@
 # print-paths-as-tree
 
-Print a list of paths from stdin as a `tree`-style tree
+## Usage
+
+`print-paths-as-tree` accepts a list of paths from stdin and then prints them as a [`tree`](http://mama.indstate.edu/users/ice/tree/)-style tree.
 
 ```
 $ cat << EOF | print-paths-as-tree
@@ -27,3 +29,7 @@ src
 └── services
     └── users.ts
 ```
+
+## Installation
+
+Super simple with `go get`: `go get github.com/christianscott/print-paths-as-tree`
