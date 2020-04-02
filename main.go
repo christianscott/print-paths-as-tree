@@ -105,6 +105,34 @@ func (n *node) getPath() string {
 	return path.Join(paths...)
 }
 
+func (n *node) indexOf(target *node) int {
+	for i, child := range n.children {
+		if child == target {
+			return i
+		}
+	}
+	return -1
+}
+
+func (n *node) position() int {
+	i := n.parent.indexOf(n)
+	if i == -1 {
+		panic("n is not a child of its parent")
+	}
+	return i
+}
+
+func (n *node) isLastChild() bool {
+	if n.parent == nil {
+		return false
+	}
+	return n.position() == len(n.parent.children)-1
+}
+
+func (n *node) hasChildren() bool {
+	return len(n.children) > 0
+}
+
 func (n *node) printAsTree() string {
 	var sb strings.Builder
 	sb.WriteString(".\n")
@@ -134,13 +162,20 @@ const (
 )
 
 func printAsTreeHelper(sb *strings.Builder, n *node) string {
-	for i, child := range n.children {
-		if i == len(n.children)-1 && len(child.children) == 0 {
-			sb.WriteString(fmt.Sprintf("%c%c %s\n", cornerPipe, horizontalPipe, child.name))
-		} else {
-			sb.WriteString(fmt.Sprintf("%c%c %s\n", verticalPipeWithOffshoot, horizontalPipe, child.name))
-			printAsTreeHelper(sb, child)
+	for _, child := range n.children {
+		for _, parent := range child.findParents() {
+			sb.WriteString(fmt.Sprintf("%s", spaces(len(parent.name))))
 		}
+
+		var pipe rune
+		if child.isLastChild() {
+			pipe = cornerPipe
+		} else {
+			pipe = verticalPipeWithOffshoot
+		}
+
+		sb.WriteString(fmt.Sprintf("%c%c %s\n", pipe, horizontalPipe, child.name))
+		printAsTreeHelper(sb, child)
 	}
 	return sb.String()
 }
@@ -153,21 +188,25 @@ func spaces(n int) string {
 	return string(s)
 }
 
-func main() {
+func printScannerAsTree(s *bufio.Scanner) string {
 	root := newNode(
 		"root",
 		nil,
 		[]*node{},
 	)
-	scanner := bufio.NewScanner(os.Stdin)
-	for scanner.Scan() {
-		path := scanner.Text()
+	for s.Scan() {
+		path := s.Text()
 		root.insert(path)
 	}
 
-	if err := scanner.Err(); err != nil {
+	if err := s.Err(); err != nil {
 		panic(err)
 	}
 
-	fmt.Println(root.printAsTree())
+	return root.printAsTree()
+}
+
+func main() {
+	scanner := bufio.NewScanner(os.Stdin)
+	fmt.Println(printScannerAsTree(scanner))
 }
