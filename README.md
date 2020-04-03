@@ -16,6 +16,8 @@ $ cat << EOF | print-paths-as-tree
 │   └── two.file
 └── dir2
     └── one.file
+
+2 directories, 3 files
 ```
 
 Handy for nicely presenting affected files as a tree:
@@ -28,6 +30,8 @@ src
 │   └── list.tsx
 └── services
     └── users.ts
+
+3 directories, 3 files
 ```
 
 ## Installation
