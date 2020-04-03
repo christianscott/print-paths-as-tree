@@ -28,16 +28,8 @@ func printScannerAsTree(s *bufio.Scanner) string {
 		panic(err)
 	}
 
-	root := dummyRoot
-	// if the dummy root only has a single child, we can use that
-	// as the root for printing instead
-	if len(root.children) == 1 {
-		root = root.children[0]
-		root.parent = nil
-	}
-
 	nLeafNodes, nInternalNodes := 0, 0
-	root.dfs(func(n *node) {
+	dummyRoot.dfs(func(n *node) {
 		// don't count the dummy root as a file or a dir
 		if n == dummyRoot {
 			return
@@ -49,6 +41,16 @@ func printScannerAsTree(s *bufio.Scanner) string {
 			nLeafNodes = nLeafNodes + 1
 		}
 	})
+
+	root := dummyRoot
+	// if the dummy root only has a single child, we can use that
+	// as the root for printing instead
+	for len(root.children) == 1 {
+		nextRoot := root.children[0]
+		nextRoot.parent = nil
+		nextRoot.name = path.Join(root.name, nextRoot.name)
+		root = nextRoot
+	}
 
 	tree := root.PrintAsTree()
 	itemCounts := fmt.Sprintf("%d %s, %d %s", nInternalNodes, directories(nInternalNodes), nLeafNodes, files(nLeafNodes))
