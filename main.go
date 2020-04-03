@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path"
 	"strings"
 )
 
@@ -35,7 +36,37 @@ func printScannerAsTree(s *bufio.Scanner) string {
 		root.parent = nil
 	}
 
-	return root.PrintAsTree()
+	nLeafNodes, nInternalNodes := 0, 0
+	root.dfs(func(n *node) {
+		// don't count the dummy root as a file or a dir
+		if n == dummyRoot {
+			return
+		}
+
+		if len(n.children) > 0 {
+			nInternalNodes = nInternalNodes + 1
+		} else {
+			nLeafNodes = nLeafNodes + 1
+		}
+	})
+
+	tree := root.PrintAsTree()
+	itemCounts := fmt.Sprintf("%d %s, %d %s", nInternalNodes, directories(nInternalNodes), nLeafNodes, files(nLeafNodes))
+	return fmt.Sprintf("%s\n%s\n", tree, itemCounts)
+}
+
+func directories(n int) string {
+	if n == 1 {
+		return "directory"
+	}
+	return "directories"
+}
+
+func files(n int) string {
+	if n == 1 {
+		return "file"
+	}
+	return "files"
 }
 
 type node struct {
@@ -108,6 +139,33 @@ func (n *node) insert(path string) {
 	}
 }
 
+func (n *node) dfs(visit func(*node)) {
+	stack := []*node{n}
+
+	pop := func() (next *node) {
+		next, stack = stack[len(stack)-1], stack[:len(stack)-1]
+		return next
+	}
+
+	seen := make(map[string]bool)
+
+	for len(stack) > 0 {
+		next := pop()
+
+		// a nodes path uniquely identifies it
+		p := next.printPath()
+		if seen[p] {
+			continue
+		}
+
+		visit(next)
+
+		stack = append(stack, next.children...)
+
+		seen[p] = true
+	}
+}
+
 // findParents returns an array containing all the nodes parents. The parent nodes are
 // returned in order of highest to lowest, and the root node is skipped. That is, the
 // first node will be the parent node closest to the root.
@@ -163,6 +221,16 @@ func (n *node) indexOf(target *node) int {
 		}
 	}
 	return -1
+}
+
+func (n *node) printPath() string {
+	parents := n.findParents()
+	pathParts := make([]string, len(parents)+1)
+	for _, parent := range parents {
+		pathParts = append(pathParts, parent.name)
+	}
+	pathParts = append(pathParts, n.name)
+	return path.Join(pathParts...)
 }
 
 // spaces returns a string of length n containing only space characters
