@@ -1,0 +1,26 @@
+.
+├── one
+│   └── f1
+│       └── f2
+│           └── f3
+│               └── f4
+│                   └── f5
+│                       └── file6.txt
+└── two
+    └── a1
+        └── a2
+            ├── b1
+            │   └── b2
+            │       ├── d1
+            │       │   └── file1.txt
+            │       └── e1
+            │           └── e2
+            │               ├── file2.txt
+            │               └── file3.txt
+            └── c1
+                └── c2
+                    └── c3
+                        ├── file4.txt
+                        └── file5.txt
+
+17 directories, 6 files
