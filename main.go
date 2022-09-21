@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 )
 
@@ -20,7 +21,7 @@ func printScannerAsTree(s *bufio.Scanner) string {
 		children: []*node{},
 	}
 	for s.Scan() {
-		path := s.Text()
+		path := filepath.Clean(s.Text())
 		dummyRoot.insert(path)
 	}
 
